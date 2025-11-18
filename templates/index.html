@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+  <!-- Top row: Nivel + pill + meta text -->
+  <div class="row">
+
+    <!-- LEFT group: level + session pill -->
+    <div class="left-group">
+      <div class="select">
+        <label for="level">Nivel:</label>
+        <select id="level">
+          <option value="A1">A1</option>
+          <option value="A2" selected>A2</option>
+          <option value="B1">B1</option>
+          <option value="B2">B2</option>
+        </select>
+      </div>
+
+      <!-- Pill + panel -->
+      <div class="usage-inline">
+        <button id="usage-toggle" class="usage-pill" type="button">
+          Sesión · <span id="turn-count">0</span>
+          <span class="usage-arrow">⌄</span>
+        </button>
+
+        <!-- Panel with dots and explanation -->
+        <div id="usage-panel" class="usage-panel">
+          <p><strong>Interacciones en esta sesión:</strong>
+            <span id="turn-count-detail">0</span>
+          </p>
+
+          <ul class="usage-legend">
+            <li>
+              <span class="dot dot-low"></span>
+              <span>0–5: Estás usando a Marvel como apoyo.</span>
+            </li>
+            <li>
+              <span class="dot dot-mid"></span>
+              <span>6–10: Haz una pausa y piensa qué puedes intentar sola/o.</span>
+            </li>
+            <li>
+              <span class="dot dot-high"></span>
+              <span>11+: <em>¿me estás usando para pensar más o para pensar menos?</em>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT side: meta text -->
+    <div class="meta">
+      Lenguas de entrada: inglés o español • Responde siempre en español
+    </div>
+
+  </div>
+
+  <!-- Chat window -->
+  <div id="chat" class="chat"></div>
+
+  <!-- Input area -->
+  <div class="inputbar">
+    <textarea id="message"
+      placeholder="Escribe tu reflexión o pregunta aquí (en inglés o español)..."></textarea>
+    <button id="send">Enviar</button>
+  </div>
+</div>
+
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('message');
+  const sendBtn = document.getElementById('send');
+  const levelSel = document.getElementById('level');
+
+  const turnCountEl = document.getElementById('turn-count');
+  const turnCountDetailEl = document.getElementById('turn-count-detail');
+  const usageToggle = document.getElementById('usage-toggle');
+  const usagePanel = document.getElementById('usage-panel');
+
+  function addMsg(role, content) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + (role === 'user' ? 'user' : 'marvel');
+    div.textContent = content;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function greet() {
+    addMsg(
+      'assistant',
+      '¡Hola! Soy Marvel. Estoy aquí para ayudarte a reflexionar y mejorar tu español, ' +
+      'pero recuerda: no escribo por ti ni corrijo directamente. ¿Quieres empezar?'
+    );
+  }
+  greet();
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMsg('user', text);
+    input.value = '';
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, level: levelSel.value })
+      });
+
+      const data = await res.json();
+      addMsg('assistant', data.reply || '(sin respuesta)');
+
+      // 🔹 update counters + self-regulation nudge
+      if (data.turn_count !== undefined) {
+        if (turnCountEl) turnCountEl.textContent = data.turn_count;
+        if (turnCountDetailEl) turnCountDetailEl.textContent = data.turn_count;
+
+        const n = data.turn_count;
+        if (n >= 10 && n % 5 === 0) {
+          addMsg(
+            'assistant',
+            'Cariño, ya llevas varias interacciones en esta sesión 🌊. ' +
+            'Antes de seguir preguntando, haz una pequeña pausa: escribe 3–5 frases ' +
+            'por tu cuenta usando lo que hemos visto y luego volvemos a revisar juntas. ' +
+            'Pregunta clave: ¿me estás usando para pensar más o para pensar menos?'
+          );
+        }
+      }
+
+    } catch (e) {
+      console.error(e);
+      addMsg('assistant', 'Uy, hubo un problema de conexión. Intenta otra vez.');
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // 🔹 toggle the usage panel when clicking the pill
+  if (usageToggle && usagePanel) {
+    usageToggle.addEventListener('click', () => {
+      usagePanel.classList.toggle('open');
+    });
+  }
+</script>
+
+{% endblock %}

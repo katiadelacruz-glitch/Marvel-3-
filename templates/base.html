@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marvel — Reflective & Grammar Coach</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+
+  <header class="header-banner">
+    <h1 class="header-title">Marvel</h1>
+    <p class="header-tagline">
+      Marvel es un chatbot diseñado para acompañarte en tu proceso de aprendizaje del español. No es una persona.
+    </p>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer-note">
+    Marvel no genera textos, ni da correcciones directas. Te guía a descubrir la respuesta.
+  </footer>
+
+</body>
+</html>

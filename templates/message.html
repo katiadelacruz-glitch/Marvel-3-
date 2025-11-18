@@ -1,0 +1,3 @@
+{% macro render_message(role, content) -%}
+  <div class="msg {{ 'user' if role=='user' else 'marvel' }}">{{ content }}</div>
+{%- endmacro %}

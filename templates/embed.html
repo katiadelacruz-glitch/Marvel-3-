@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Marvel Chat (Embed)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <style>
+    body {
+      margin: 0;
+      background: #f8fbff; /* pale blue for readability */
+      font-family: 'Open Sans', sans-serif;
+    }
+    #chat-box {
+      max-width: 100%;
+      margin: 0 auto;
+      height: 90vh;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #fff;
+      border-left: 4px solid #2a6ebb; /* deep blue accent */
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    #input-form {
+      display: flex;
+      padding: 0.5rem;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+    #user-input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-right: 0.5rem;
+    }
+    button {
+      background: #2a6ebb;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1f4f8d;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-box"></div>
+
+  <form id="input-form">
+    <textarea id="user-input" placeholder="Escribe aquí..."></textarea>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    const form = document.getElementById("input-form");
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      // Add student message
+      chatBox.innerHTML += `<div style="text-align:right;background:#e0f0ff;padding:8px;margin:5px;border-radius:8px;">${msg}</div>`;
+      input.value = "";
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+
+      // Add Marvel’s reply
+      chatBox.innerHTML += `<div style="text-align:left;background:#fff;border-left:4px solid #2a6ebb;padding:8px;margin:5px;border-radius:8px;">${data.reply}</div>`;
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+</body>
+</html>
